@@ -1,0 +1,35 @@
+
+# Исключения PyCharm и IDE
+.idea/
+.vscode/
+*.swp
+*.sublime-project
+
+# Виртуальное окружение Python
+venv/
+.venv/
+env/
+ENV/
+
+# Кэш Python и компилированные файлы
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Локальная база данных приложения и тестов
+*.db
+*.sqlite3
+app_data.db
+
+# Генерируемые дампы контекста
+context_dump.txt
+
+# Кэш pytest и тестирования
+.pytest_cache/
+.coverage
+htmlcov/
+
+# Системные файлы операционных систем
+Thumbs.db
+Desktop.ini
+.DS_Store
