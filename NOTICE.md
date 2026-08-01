@@ -1,7 +1,7 @@
-
-# Third-Party Software Notices / Уведомления о стороннем ПО
-
-This project, **FS-XML Interpreter**, uses third-party open-source libraries. Their licenses and copyright notices are listed below.
+Third-Party Software Notices / Уведомления о стороннем ПО
+FS-XML Interpreter
+Copyright (c) 2026 Doctorgth.
+This product contains software developed by third parties. The license terms and copyright notices for these components are detailed below.
 
 ---
 
