@@ -28,3 +28,7 @@ PySide6 is dynamically linked and imported as an unmodified Python package via `
 </fs_create>
 
 ---
+
+This application includes a portable distribution of the Python interpreter, 
+which is licensed under the Python Software Foundation License (PSFL). 
+The applicable license texts can be found inside the 'python/' directory.
