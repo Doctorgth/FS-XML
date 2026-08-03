@@ -1,5 +1,12 @@
 DARK_STYLE = """
-QMainWindow, QDialog {
+QMainWindow {
+    border-image: url("images/background.png") 0 0 0 0 stretch stretch;
+    background-color: #0b0f19;
+    color: #f8fafc;
+    font-family: 'Segoe UI', Arial, sans-serif;
+}
+
+QDialog {
     background-color: #0b0f19;
     color: #f8fafc;
     font-family: 'Segoe UI', Arial, sans-serif;
@@ -11,13 +18,13 @@ QWidget {
 }
 
 QFrame#card {
-    background-color: #111827;
-    border: 1px solid #1f2937;
+    background-color: rgba(17, 24, 39, 0.45);
+    border: 1px solid rgba(31, 41, 55, 0.3);
     border-radius: 8px;
 }
 
 QScrollArea, QScrollArea > QWidget > QWidget {
-    background-color: #0b0f19;
+    background-color: transparent;
     border: none;
 }
 
@@ -27,8 +34,8 @@ QLabel {
 }
 
 QPushButton {
-    background-color: #1e293b;
-    border: 1px solid #334155;
+    background-color: rgba(30, 41, 59, 0.6);
+    border: 1px solid rgba(51, 65, 85, 0.5);
     color: #f8fafc;
     border-radius: 6px;
     padding: 6px 12px;
@@ -36,12 +43,12 @@ QPushButton {
 }
 
 QPushButton:hover {
-    background-color: #334155;
+    background-color: rgba(51, 65, 85, 0.8);
     border-color: #475569;
 }
 
 QPushButton#btn_accent {
-    background-color: #0284c7;
+    background-color: rgba(2, 132, 199, 0.8);
     border: 1px solid #0369a1;
     color: #ffffff;
 }
@@ -51,7 +58,7 @@ QPushButton#btn_accent:hover {
 }
 
 QPushButton#btn_danger {
-    background-color: #7f1d1d;
+    background-color: rgba(127, 29, 29, 0.8);
     border: 1px solid #991b1b;
     color: #ffffff;
 }
@@ -68,13 +75,13 @@ QPushButton#btn_icon {
 }
 
 QPushButton#btn_icon:hover {
-    background-color: #334155;
+    background-color: rgba(51, 65, 85, 0.5);
     border-radius: 4px;
 }
 
 QTextEdit, QPlainTextEdit, QLineEdit {
-    background-color: #0f172a;
-    border: 1px solid #1e293b;
+    background-color: rgba(15, 23, 42, 0.3);
+    border: 1px solid rgba(30, 41, 59, 0.3);
     border-radius: 6px;
     color: #f1f5f9;
     padding: 8px;
@@ -83,8 +90,8 @@ QTextEdit, QPlainTextEdit, QLineEdit {
 }
 
 QTreeWidget, QListWidget {
-    background-color: #0f172a;
-    border: 1px solid #1e293b;
+    background-color: rgba(15, 23, 42, 0.3);
+    border: 1px solid rgba(30, 41, 59, 0.3);
     border-radius: 6px;
     color: #f1f5f9;
     padding: 4px;

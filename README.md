@@ -1,4 +1,3 @@
-
 > ⚠️ **Disclaimer:** This document is an automated translation from the original Russian version and may contain inaccuracies or minor errors. The original project documentation is written in Russian.
 
 #  FS-XML Interpreter (FS-XML v1.2)
@@ -48,6 +47,30 @@ When developing software with AI assistants, developers regularly face tedious r
    - **"Rollback"** button to restore the state BEFORE XML execution.
    - **"Apply Again"** button to re-apply rolled back changes.
    - Detection of manual edits made on top of AI changes.
+
+---
+
+## 💡 Tips for Interacting with AI (Important)
+
+Follow these rules for stable and efficient interaction with the AI model:
+
+1. **Teaching the AI the Format:**
+   Before starting a session, copy the entire text from the **`FS-XML v1.2.txt`** specification file and paste it into the **System Instructions** (system prompt / custom instructions) in your AI chat settings. This trains the model to output code strictly in the required format.
+
+2. **Copying Responses "As-Is":**
+   It does not matter how the AI formats its response — whether it wraps the XML in markdown code blocks (````xml ... ````) or writes the tags directly in the plain text of the message.
+   **Simply copy the entire message** and paste it into the application's text editor. The parser will easily filter out any conversational text, explanations, or formatting, extracting only the valid XML instructions.
+
+   *Tip for neatness:* If you prefer clean aesthetics, you can add a rule to the system prompt: *"Always wrap XML instructions in markdown code blocks"*. However, even if the AI's layout gets broken, the parser will still process it successfully.
+
+3. **Resolving "Search Block Not Found" Errors:**
+   If the application returns an error stating that a search block was not found, it means the AI lost context or attempted to modify an outdated code structure. Simply generate a fresh context dump in the app and send it to the AI to update its knowledge of the project.
+
+4. **Limitations on Creating Files:**
+   The `<fs_create>` instruction can **only** create a file if it does not yet exist on disk. If the file is already present, the AI must use the `<fs_edit>` instruction (for complete overwrites, it can use the `<all />` tag inside the search block).
+
+5. **Maintaining Chat History Hygiene:**
+   When sending a new context dump into an ongoing chat session, **it is highly recommended to delete previous dumps from the message history** (or start a fresh chat session). This prevents the AI from getting confused by outdated versions of your files.
 
 ---
 
@@ -154,6 +177,189 @@ DATABASE_URL = "sqlite:///app.db"
 ## 🧪 Running Tests
 
 The project is covered by automated tests (DB, parser, secure executor, and PySide6 E2E GUI tests):
+
+```bash
+pytest test_app.py
+```
+
+
+#  FS-XML Interpreter (FS-XML v1.2)
+
+Графическое приложение (GUI) на Python / PySide6 для автоматизированного, безопасного применения изменений в коде, сгенерированных нейросетями (ChatGPT, Claude, DeepSeek и др.), по спецификации **FS-XML v1.2**.
+
+---
+
+##  Зачем нужен этот проект? (Проблема и решение)
+
+### Проблема:
+При разработке программ с помощью нейросетей разработчики сталкиваются с рутиной:
+1. **Ручное копирование:** ИИ выдает фрагменты кода для 5 разных файлов. Приходится вручную открывать каждый файл, искать нужное место и вставлять код.
+2. **Риск сломать проект:** Легко ошибиться при вставке, пропустить скобку или затереть важную функцию.
+3. **Сложность отката:** Если предложенный ИИ вариант не заработал, откатывать изменения вручную по нескольким файлам долго и неудобно.
+4. **Безопасность системных файлов:** Нейросеть может случайно переписать конфигурационные файлы, которые трогать нельзя.
+
+### Решение:
+**AI Code Custom Interpreter** решает эти проблемы полностью:
+- **Автоматическое применение:** Нейросеть формирует ответ в формате XML (`FS-XML`), а приложение за 1 клик самостоятельно создает файлы или точечно меняет нужные фрагменты кода.
+- **Безопасный контекст и разграничение прав:** Вы сами выбираете, какие файлы проекта доступны для редактирования (`[WRITABLE]`), а какие защищены от изменений (`[READ_ONLY]`).
+- **Генератор дампа контекста:** Приложение собирает выбранные файлы проекта в единый аккуратный текстовый дамп со специальной инструкцией для нейросети.
+- **История и откат в 1 клик (Rollback):** Все изменения сохраняются в локальную базу данных (SQLite). Любую сессию правок можно мгновенно откатить к исходному состоянию диска.
+- **Защита от перезаписи ручных правок:** Если после применения кода ИИ вы отредактировали файл вручную, система предупредит вас об этом перед откатом.
+
+---
+
+##  Основные возможности
+
+1. **Менеджер проектов и контекста:**
+   - Ведение нескольких проектов одновременно.
+   - Древовидный выбор файлов/папок с гибкой установкой прав:
+     - 🟢 `Writable (W)` — файлы разрешено создавать и редактировать.
+     - 🟡 `Read-Only (RO)` — файлы только для чтения (ИИ видит контекст, но не может их менять).
+
+2. **Создание дампа контекста (`context_dump.txt`):**
+   - Автоматическая сборка содержимого выбранных файлов в один документ вместе с инструкциями FS-XML v1.2.
+   - Автоматический пропуск бинарных файлов (картинки, `.pyc`, `.exe`) и защита от ошибок кодировки.
+
+3. **Парсер и Исполнитель XML (FS-XML Parser & Executor):**
+   - Распознавание тегов `<fs_create>` (создание файлов) и `<fs_edit>` (частичная замена `<fs_search>`/`<fs_replace>` или полная перезапись `<all />`).
+   - **Защита Path Traversal:** Предотвращение выхода за пределы рабочей папки проекта (защита от путей вида `../../`).
+   - Проверка наличия прав на запись перед каждым изменением.
+
+4. **История изменений и Откаты:**
+   - Хранение всех операций и исходных снимков файлов (snapshots) в базе данных SQLite.
+   - Кнопка **«Откатить»** для возврата к состоянию ДО применения XML.
+   - Кнопка **«Применить снова»** для повторного наката отмененных изменений.
+   - Детекция ручных правок поверх изменений ИИ.
+
+---
+
+##  💡 Рекомендации по работе с нейросетями (Важно)
+
+Для стабильной и эффективной работы с ИИ придерживайтесь следующих правил:
+
+1. **Обучение нейросети формату:**
+   Перед началом сессии скопируйте всё содержимое файла спецификации **`FS-XML v1.2.txt`** и вставьте его в поле **System Instructions** (системные инструкции / Custom Instructions / System Prompt) в настройках вашего чата с нейросетью. Это обучит модель правильному синтаксису создания и редактирования файлов.
+
+2. **Копирование ответов «как есть»:**
+   Вам абсолютно не важно, как именно ИИ форматирует ответ — оборачивает ли он XML в блоки разметки markdown (````xml ... ````) или пишет теги прямо в тексте сообщения. 
+   **Просто скопируйте всё сообщение целиком** и вставьте его в текстовое поле программы. Парсер без проблем переварит любой лишний текст, комментарии и оформление, вычленив только валидные XML-инструкции. 
+
+   *Совет для эстетов:* При желании вы можете дописать в конец системной инструкции требование: *«Всегда оборачивай XML-инструкции в блоки кода markdown»*. Но даже если верстка ИИ «поплывет» или развалится — пережимать код не нужно, парсер справится.
+
+3. **Решение ошибки «Блок поиска не найден»:**
+   Если программа сообщает, что замена не удалась, так как блок поиска не найден, это означает, что нейросеть потеряла контекст или попыталась изменить устаревший код. Просто создайте свежий дамп контекста в программе и отправьте его нейросети, чтобы обновить её знания о проекте.
+
+4. **Ограничение на создание файлов:**
+   Инструкция `<fs_create>` может создать файл на диске **только в том случае, если его еще не существует**. Если файл уже есть, нейросеть должна использовать инструкцию `<fs_edit>` (для полной перезаписи существующего файла ИИ может использовать тег `<all />` внутри поиска).
+
+5. **Гигиена чата и актуализация контекста:**
+   При отправке нового дампа контекста в чат с ИИ **настоятельно рекомендуется удалять предыдущие дампы из истории сообщений** (или очищать историю/начинать новый диалог). Это не позволит нейросети путаться в старых и новых версиях одних и тех же файлов.
+
+---
+
+##  Рабочий процесс (Workflow)
+
+```
+[ Проект на диске ] ──> (Выбор файлов W/RO) ──> [ Создать дамп контекста ]
+                                                             │
+                                                             ▼
+                                                [ Отправка дампа в ИИ ]
+                                                             │
+                                                             ▼
+[ Файл на диске изменен ] <── (Нажать "ВЫПОЛНИТЬ") <── [ XML-ответ ИИ ]
+          │
+          └──> При необходимости: [ Нажать "Откатить" ] ──> [ Исходный файл ]
+```
+
+---
+
+## 🛠️ Формат FS-XML v1.2 (Коротко)
+
+Нейросеть генерирует инструкции в следующих форматах:
+
+### 1. Создание нового файла
+```xml
+<fs_create path="src/utils/logger.py">
+import datetime
+
+def log(msg):
+    print(f"[{datetime.datetime.now()}] {msg}")
+</fs_create>
+```
+
+### 2. Частичное изменение файла (Search & Replace)
+```xml
+<fs_edit path="src/utils/logger.py">
+<fs_search>
+def log(msg):
+    print(f"[{datetime.datetime.now()}] {msg}")
+</fs_search>
+<fs_replace>
+def log(msg, level="INFO"):
+    print(f"[{datetime.datetime.now()}] [{level}] {msg}")
+</fs_replace>
+</fs_edit>
+```
+
+### 3. Полная перезапись файла
+```xml
+<fs_edit path="config.py">
+<fs_search><all /></fs_search>
+<fs_replace>
+DEBUG = True
+DATABASE_URL = "sqlite:///app.db"
+</fs_replace>
+</fs_edit>
+```
+
+---
+
+## 🚀 Быстрый старт
+
+### Требования
+- **Python 3.10** или выше.
+- PySide6, pytest (для запуска тестов).
+
+### Установка и запуск
+
+1. **Клонируйте репозиторий / Перейдите в папку с проектом:**
+   ```bash
+   cd project_folder
+   ```
+
+2. **Установите зависимости:**
+   ```bash
+   pip install PySide6 pytest
+   ```
+
+3. **Запустите приложение:**
+   ```bash
+   python main.py
+   ```
+
+---
+
+## 📂 Структура проекта
+
+```
+.
+├── main.py            # Точка входа в приложение
+├── database.py        # Взаимодействие с БД SQLite (проекты, файлы, история, снимки)
+├── parser.py          # Модуль парсинга XML-инструкций FS-XML v1.2
+├── executor.py        # Исполнитель изменений, проверка прав, откаты, дамп контекста
+├── test_app.py        # Автоматические бэкенд и E2E GUI тесты (pytest + pytest-qt)
+├── FS-XML v1.2.txt    # Спецификация формата управления файлами
+└── ui/                # Графический интерфейс на PySide6
+    ├── main_window.py # Главное окно (панели проектов, редактора, истории)
+    ├── modals.py      # Модальные окна (выбор файлов контекста, просмотрщик)
+    └── theme.py       # Темная тема оформления (CSS / QSS)
+```
+
+---
+
+## 🧪 Запуск тестов
+
+Проект полностью покрыт автоматическими тестами (БД, парсер, безопасное исполнение и E2E тесты интерфейса PySide6):
 
 ```bash
 pytest test_app.py

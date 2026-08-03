@@ -4,7 +4,7 @@ from PySide6.QtWidgets import (QMainWindow, QWidget, QHBoxLayout, QVBoxLayout,
                                QLabel, QFileDialog, QFrame, QScrollArea, QMessageBox, QSplitter)
 from PySide6.QtCore import Qt, QSize
 from PySide6.QtGui import QColor
-
+from PySide6.QtGui import QIcon
 from database import Database
 from parser import XMLCodeParser
 from executor import CodeExecutor
@@ -14,6 +14,14 @@ from ui.modals import InputModal, ContextFilePickerModal, AttachedFilesViewModal
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+        # Находим путь к корню проекта (выходим из папки ui/ на уровень вверх)
+        project_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+
+        # Путь к файлу иконки (можно использовать как .png, так и .ico)
+        icon_path = os.path.join(project_root, "images", "FS-XML.png")
+
+        if os.path.exists(icon_path):
+            self.setWindowIcon(QIcon(icon_path))
         self.setWindowTitle("FS-XML Interpreter")
         self.resize(1350, 850)
 
