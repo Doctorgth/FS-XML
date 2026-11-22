@@ -1,0 +1,109 @@
+FS-XML Interpreter (Safe AI Patch Orchestrator v2.0)
+│
+├── desktop_app.py                      # Точка входа десктопа: Uvicorn (:18420) + окно PyWebView
+├── launcher.cs                         # Исходник нативного Windows-лаунчера (FS-XML.exe под Embed Python)
+├── FS-XML.txt                          # Актуальный системный промпт спецификации FS-XML v2.0
+├── fsignore_global                     # Глобальный игнор-лист (действует на все проекты)
+├── requirements.txt                    # Зависимости Python (FastAPI, Uvicorn, Pydantic, PyWebView, PyTest, HTTPX)
+├── README.md                           # Документация проекта для GitHub (English)
+├── README.ru.md                        # Документация проекта для GitHub (Русский)
+├── LICENSE                             # Лицензия Apache 2.0
+├── NOTICE.md                           # Уведомления о лицензиях сторонних библиотек
+│
+├── install.bat                         # Установка .venv, Python/NPM зависимостей и сборка фронтенда
+├── run.bat                             # Сборка фронтенда и запуск desktop_app.py
+├── setup_embed_python.bat              # Настройка Embeddable Python (python/*._pth, pip, requirements.txt)
+├── build_exe.bat                       # Компиляция FS-XML.exe из launcher.cs
+├── build_release.bat                   # Сборка портативного релиза в папку release\
+├── run_backend_tests.bat               # Запуск backend-тестов (pytest)
+├── run_web_tests.bat                   # Запуск frontend-тестов (vitest)
+├── run_all_tests.bat                   # Общий прогон всех тестов (Backend + Frontend)
+│
+├── core/                               # АВТОНОМНОЕ ЯДРО ИСПОЛНЕНИЯ (CORE)
+│   ├── __init__.py
+│   ├── engine.py                       # CoreEngine: устойчивый парсер XML-блоков и execute_batch
+│   ├── registry.py                     # CommandRegistry: регистрация и поиск обработчиков по тегу
+│   ├── sandbox.py                      # Sandbox: защита от Path Traversal и проверка прав (W / RO / Unmarked)
+│   ├── types.py                        # Модели: CommandType, FileState, ExecutionContext, CommandResult и др.
+│   └── handlers/                       # Обработчики XML-команд
+│       ├── __init__.py                 # register_default_handlers()
+│       ├── base.py                     # Абстрактный интерфейс BaseCommandHandler
+│       ├── system_standard/            # Обычные команды (разрешены всегда)
+│       │   ├── __init__.py
+│       │   ├── create.py               # <fs_create> — создание нового файла (ошибка при коллизии)
+│       │   └── edit.py                 # <fs_edit> — поиск/замена (мультиблоки, <all />, CRLF/LF)
+│       ├── system_management/          # Управляющие команды (требуют allow_management=True)
+│       │   ├── __init__.py
+│       │   ├── profile_create.py       # <fs_profile_create> — создание нового профиля
+│       │   └── file_state.py           # <fs_file_state> — смена прав файла (writable/readonly/unmarked)
+│       └── custom/                     # Пользовательские команды расширения
+│           ├── __init__.py
+│           └── example.py              # ExampleCustomHandler (<example>)
+│
+├── server/                             # БЭКЕНД (FastAPI + SQLite)
+│   ├── __init__.py
+│   ├── main.py                         # Инициализация FastAPI, статика frontend/dist, /images, /health
+│   ├── api/
+│   │   └── routes.py                   # REST API (/api/*): проекты, профили, дамп, execute, откат, снапшоты, конфиг, фон
+│   ├── database/
+│   │   ├── models.py                   # Датаклассы моделей БД
+│   │   └── repository.py               # DatabaseRepository (SQLite WAL: projects, profiles, rules, sessions, snapshots, settings)
+│   ├── middlewares/
+│   │   └── cors.py                     # Проверка разрешённых локальных Origin и CORS
+│   └── services/
+│       ├── project_service.py          # Исполнение патчей через CoreEngine, запись истории и синхронизация правил
+│       ├── profile_service.py          # Управление профилями и правилами доступа
+│       ├── context_service.py          # Сборка дерева файлов, детекция бинарников/тестов, генерация context_dump.txt
+│       └── ignore_service.py           # Парсер и матчинг правил fsignore_global + .fsignore (синтаксис .gitignore)
+│
+├── frontend/                           # ФРОНТЕНД (Vue 3 + TypeScript + Pinia + TailwindCSS)
+│   ├── index.html
+│   ├── package.json
+│   ├── vite.config.ts                  # Конфиг Vite (dev-порт 18421) и Vitest (happy-dom)
+│   ├── tailwind.config.js
+│   ├── postcss.config.js
+│   ├── src/
+│   │   ├── main.ts                     # Точка входа Vue + Pinia
+│   │   ├── App.vue                     # Главный layout: IDE-меню, проекты, профили, сплиттеры, модалки, фон
+│   │   ├── style.css                   # Директивы Tailwind и базовые стили
+│   │   ├── entities/
+│   │   │   └── projectStore.ts         # Pinia-хранилище проектов, профилей, дерева файлов, истории и лога
+│   │   ├── shared/
+│   │   │   └── api/
+│   │   │       ├── client.ts           # HTTP-клиент к REST API (:18420/api)
+│   │   │       └── types.ts            # TypeScript-интерфейсы API
+│   │   └── widgets/
+│   │       ├── ExecutionHub/
+│   │       │   └── ExecutionHub.vue    # Центральное поле ввода XML и запуск применения
+│   │       ├── FileTree/
+│   │       │   └── FileTreeModal.vue   # Дерево проекта с поиском (строка, glob, regex) и разметкой W / RO
+│   │       ├── HistoryPanel/
+│   │       │   └── HistoryPanel.vue    # История сессий, откат/повтор, копирование ошибок, флаги, дамп, промпт
+│   │       ├── AttachedFilesViewerModal.vue # Просмотрщик содержимого отмеченных файлов с поиском
+│   │       ├── CreateSnapshotModal.vue # Создание снапшота (текущий или все профили)
+│   │       ├── SnapshotsListModal.vue  # Список, восстановление и удаление снапшотов
+│   │       ├── IgnoreEditorModal.vue   # Редактор fsignore_global и проектного .fsignore
+│   │       ├── InstructionModal.vue    # Встроенная инструкция по работе с программой
+│   │       ├── FsignoreHelpModal.vue   # Справка по синтаксису fsignore
+│   │       ├── SnapshotHelpModal.vue   # Справка по снапшотам
+│   │       └── ConfigHelpModal.vue     # Справка по экспорту/импорту fs_orchestrator_config.json
+│   └── tests/                          # Автотесты фронтенда (Vitest)
+│       ├── style_loading.test.ts
+│       ├── components.test.ts
+│       ├── store.test.ts
+│       ├── modals_and_features.test.ts
+│       ├── new_features.test.ts
+│       └── audit_issues.test.ts
+│
+├── backend_tests/                      # Автотесты бэкенда и ядра (PyTest)
+│   ├── README_TESTS.md
+│   ├── test_sandbox.py
+│   ├── test_commands.py
+│   ├── test_context_and_ignore.py
+│   ├── test_api.py
+│   ├── test_features_v2.py
+│   ├── test_config_and_folder.py
+│   ├── test_audit_issues.py
+│   └── test_audit_fixes.py
+│
+└── images/                             # Ресурсы интерфейса (FS-XML.ico, FS-XML.png, background.png и фоны)

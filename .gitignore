@@ -15,13 +15,23 @@ __pycache__/
 *.py[cod]
 *$py.class
 
-# Локальная база данных приложения и тестов
+# Фронтенд (зависимости и артефакты сборки Vite)
+node_modules/
+frontend/dist/
+.vite/
+*.tsbuildinfo
+
+# Локальная база данных приложения (включая SQLite WAL-файлы) и тестов
 *.db
+*.db-wal
+*.db-shm
+*.db-journal
 *.sqlite3
 app_data.db
 
-# Генерируемые дампы контекста
+# Генерируемые дампы контекста и логи лаунчера
 context_dump.txt
+launcher_error.log
 
 # Кэш pytest и тестирования
 .pytest_cache/
@@ -33,6 +43,6 @@ Thumbs.db
 Desktop.ini
 .DS_Store
 
-# Переносимый локальный интерпретатор Python (Windows Embed)
+# Переносимый локальный интерпретатор Python (Windows Embed) и папка сборки релиза
 /python/
-
+/release/
